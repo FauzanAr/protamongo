@@ -1,5 +1,6 @@
 const express = require('express')
 const User = require('../models/User')
+const auth = require('../middleware/auth')
 
 const router = express.Router()
 
@@ -9,6 +10,10 @@ router.get('/', async (req, res) => {
     } catch (error) {
         res.status(400).send(error)
     }
+})
+
+router.get('/user/me', auth, async(req, res) => {
+    res.send(req.user)
 })
 
 router.post('/user', async (req, res) => {
@@ -33,6 +38,29 @@ router.post('/user/login', async(req, res) => {
         res.send({ user, token })
     } catch (error) {
         res.status(400).send(error)
+    }
+})
+
+router.post('/user/me/logout', auth, async (req, res) => {
+    try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token != req.token
+        })
+
+        await req.user.save()
+        res.send()
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
+
+router.post('/user/me/logout-all', auth, async(req, res) => {
+    try {
+        req.user.tokens.splice(0, req.user.tokens.length)
+        await req.user.save()
+        res.send()
+    } catch (error) {
+        res.status(500).send(error)
     }
 })
 
